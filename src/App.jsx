@@ -4,9 +4,12 @@ import { Chip } from "./chip"
 import { useState } from "react";
 import clsx from "clsx";
 import { getFarewellText } from "./utils";
+import { getRandomWord } from "./utils";
+import Confetti from "react-confetti"
+
 
 export default function Hangman() {
-  const [currentWord,setCurrentWord]= useState("react");
+  const [currentWord,setCurrentWord]= useState(()=> getRandomWord());
   const [guessedLetters,setGuessedLetters] = useState([]);
 
   const languagesArray = languages;
@@ -16,6 +19,7 @@ export default function Hangman() {
   wrongGuessesFunc();
   const gameWon = currentWordArray.every((letter) => guessedLetters.includes(letter));
   const gameLost = wrongGuesses>=languagesArray.length-1;
+
 
   function guessLetter(letter){
     setGuessedLetters(prevLetters => 
@@ -34,6 +38,11 @@ export default function Hangman() {
     return !currentWordArray.includes(guessedLetters[guessedLetters.length-1]);
   }
 
+  function newGame(){
+    setCurrentWord(getRandomWord())
+    setGuessedLetters([])
+  }
+
   const gameStatusClass = clsx("gameStatus", {
     won: gameWon,
     lost: gameLost
@@ -41,6 +50,7 @@ export default function Hangman() {
   
     return (
         <main>
+          {gameWon && <Confetti/>}
           <div className="explanation">
           <h1>Assembly: Endgame</h1>
           <h2> Guess the word in under 8 attempts to keep the programming world safe from assembly!</h2>
@@ -62,7 +72,7 @@ export default function Hangman() {
               </div>
 
             <div className = "currentWord">
-            {  currentWordArray.map((letter, index) => (<span key={index}>{ guessedLetters.includes(letter)? letter.toUpperCase() : ""  } </span>))   }
+            {  currentWordArray.map((letter, index) => (<span key={index}>{ (gameLost || guessedLetters.includes(letter))? letter.toUpperCase() : ""  } </span>))   }
             </div>
 
             <div className="keyboard">
@@ -71,12 +81,12 @@ export default function Hangman() {
                 "letterright": guessedLetters.includes(letter) && currentWord.includes(letter),     
                 "letterwrong": guessedLetters.includes(letter) && !currentWord.includes(letter),   
               })} 
-               key={letter} onClick={() => guessLetter(letter)}> {letter.toUpperCase()} </button> )    
+               key={letter} onClick={ gameWon? null : gameLost? null: () => guessLetter(letter)  }> {letter.toUpperCase()} </button> )    
                    )
             }
             </div>
             {(gameWon || gameLost)? 
-            <button className="new-game">New Game</button> : ""}
+            <button className="new-game" onClick={newGame}>New Game</button> : ""}
          </main>
     )
 }
